@@ -38,7 +38,6 @@ function scene:coords()
     ly.stroke = {0.,0.7,0}
 end
 
-
 function scene:test1()
     local n = 10
     self:coords()
@@ -47,7 +46,7 @@ function scene:test1()
         y2 = x
         self:plot(x, 0*y1 + 1*y2, 2, {0,0,1}) 
         self:plot(x, 1*y1 + 0*y2, 2, {0.5}) 
-        self:plot(x, 1*y1 + 1*y2, 2) 
+        self:plot(x, 1*y1 + 1*y2, 4) 
     end
 end
 
