@@ -15,7 +15,7 @@ display.setStatusBar(display.HiddenStatusBar)
 
 -- Composer.gotoScene("view.world.scene")
 
-Composer.gotoScene("scene1")
+Composer.gotoScene("scenes.scene2")
 
 ----------------------------------------------------
 -- EOF
