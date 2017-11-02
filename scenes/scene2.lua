@@ -72,7 +72,7 @@ function scene:create(event)
     local balloon1 = display.newImageRect( "balloon.png", 112, 112 )
     balloon1.x = display.contentCenterX
     balloon1.y = display.contentCenterY
-    balloon1.alpha = 2
+    balloon1.alpha = 50
 
     physics.start()
     physics.addBody(platform, "static", {bounce=.1})
