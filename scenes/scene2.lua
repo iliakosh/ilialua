@@ -52,6 +52,8 @@ end
 ----------------------------------------------------
 
 function scene:create(event)
+	local debug = false 
+
 	-- start
 	print("Hello world, I am here again!")
     self.W = display.contentWidth 
@@ -65,76 +67,108 @@ function scene:create(event)
 	
 	-- Physics 
 	physics.start()
-	--physics.setDrawMode("debug")
-	
+	--physics.setContinuous(true)
+
 	-- bounds
-	depth  = 1000
+	depth  = 0
 	top    =  display.newRect(display.contentCenterX, 0, self.W, 1)
 	bottom =  display.newRect(display.contentCenterX, self.H+depth, self.W, 10)
 	left   =  display.newRect(0,display.contentCenterY, 1, self.H)
 	right  =  display.newRect(self.W, display.contentCenterY, 1, self.H)
 	left:setFillColor(1,0,0)
-	bottom:setFillColor(1,0,0)
+	bottom:setFillColor(0,.5,0)
 	top:setFillColor(1,0,0)
 	right:setFillColor(1,0,0)
 	physics.addBody(bottom,   "static" )
-	physics.addBody(left,     "static" )
+	physics.addBody(left,     "static", {friction=.5} )
 	physics.addBody(right,    "static" )
 	physics.addBody(top,      "static" )
 	
 	-- create platform
-	shellR         = 300 
-    local platform = display.newImageRect("platform.png", 300, 50)
+	local shellR         = 300 
+    local platform = display.newImageRect("platform.png", 300, 70)
     platform.name  = "Platform"
     platform.x     = display.contentCenterX
-    platform.y     = display.contentHeight-60
+    platform.y     = display.contentHeight-160
 	platform:addEventListener("touch", onTouch) -- Listen touch event for platform 
     physics.addBody(platform, "dynamic", {bounce=.1})
-	physics.newJoint("piston", bottom, platform, 0, 0, 1, 0 )
-	
-	-- create platform's shell
-	function calc_shell_shape(w,h,d)
+
+	function calc_shape(w,h,d)
 		local vertices = { -w/2,h/2, (-w/2)+d,-h/2, (w/2)-d,-h/2, w/2,h/2 }
 		return 	vertices
 	end 
-	local shell_shape = calc_shell_shape(platform.width, 50, platform.width*.25)
+	
+	-- create platform's shell
+	local shell_shape = calc_shape(platform.width, 50, platform.width*.30)
 	local shell = display.newPolygon(0,0, shell_shape)
 	shell.x     = platform.x
 	shell.y     = platform.y-(platform.height+shell.height)/2
 	shell.fill  = {type="image", filename="platform.png"}
-	physics.addBody(shell, "dynamic", {density=.01, shape=shell_shape, bounce=.1})
-	physics.newJoint("weld", platform, shell,  0, 0)
+	physics.addBody(shell, "dynamic", {shape=shell_shape, bounce=.5})
+	local piston = physics.newJoint("piston", platform, shell,  platform.x, platform.y, 0, -1)
+	piston.isLimitEnabled = true
+	piston:setLimits(0, 30)
 
 	-- create platform's wheels
-	local wheel_radius = 100 
-    local wheel1 = display.newImageRect("wooden-wheel.png", wheel_radius, wheel_radius)
-    local wheel2 = display.newImageRect("wooden-wheel.png", wheel_radius, wheel_radius)
+	local wheel_radius = 50
+    local wheel1 = display.newImageRect("wooden-wheel.png", wheel_radius*2, wheel_radius*2)
+    local wheel2 = display.newImageRect("wooden-wheel.png", wheel_radius*2, wheel_radius*2)
 	wheel1.y = platform.y + platform.height/2 - 10
 	wheel2.y = platform.y + platform.height/2 - 10 
 	wheel1.x = platform.x - platform.width/2 + wheel_radius/2 
 	wheel2.x = platform.x + platform.width/2 - wheel_radius/2 
-    physics.addBody(wheel1, "dynamic", {radius=wheel_radius})
-    physics.addBody(wheel2, "dynamic", {radius=wheel_radius})
-	physics.newJoint("weld", platform, wheel1, 0, 0)
-	physics.newJoint("weld", platform, wheel2, 0, 0)
-	
+    physics.addBody(wheel1, "dynamic", {radius=wheel_radius, friction=.5})
+    physics.addBody(wheel2, "dynamic", {radius=wheel_radius, friction=.5})
+	physics.newJoint("pivot", platform, wheel1, wheel1.x, wheel1.y)
+	physics.newJoint("pivot", platform, wheel2, wheel2.x, wheel2.y)
+
 	-- create ball
 	local ball = display.newImageRect("scull.png", 112, 112)
 	ball.name  = "ball"
     ball.x     = display.contentCenterX
     ball.y     = display.contentCenterY
-	ball.alpha = 50
-    physics.addBody(ball, "dynamic", {radius=50, bounce=.5})
+    physics.addBody(ball, "dynamic", {radius=50, bounce=.95 ,friction=.5})
 	
+	-- create cloud
+	local cloud_shape = calc_shape(500, 150, 0)
+	local cloud = display.newPolygon(0,0, cloud_shape)
+	cloud.fill  = {type="image", filename="cloud1.png"}
+	cloud.x     = display.contentCenterX
+    cloud.y     = display.contentCenterY-450
+	physics.addBody(cloud, "dynamic", {shape=cloud_shape, bounce=.95 ,friction=.5})
+	local touch1 = physics.newJoint( "touch", cloud, cloud.x-100, cloud.y)
+	local touch2 = physics.newJoint( "touch", cloud, cloud.x+100, cloud.y)
+	local dr = 0.7
+	local mf = 7
+	touch1.dampingRatio = dr
+	touch1.maxForce     = mf
+	touch2.dampingRatio = dr
+	touch2.maxForce     = mf
+	
+
 	-- controll
 	local function onKeyEvent(event)
-		f = 1.
 		if event.phase == "down" then
+			if event.keyName == "enter" then
+				if debug then
+					physics.setDrawMode("normal")
+					debug = false					
+				else
+					physics.setDrawMode("debug")
+					debug = true		
+				end
+			end
+			local f = 4
 			if event.keyName == "left" then
-				platform:applyLinearImpulse(-f,0,0,0)	
+				platform:applyLinearImpulse(-f,0,platform.x,platform.y)	
 			end
 			if event.keyName == "right" then
-				platform:applyLinearImpulse(f,0,0,0)
+				platform:applyLinearImpulse(f,0,platform.x,platform.y)
+			end
+			if event.keyName == "up" then
+				local f = 5
+				shell:applyLinearImpulse(0,-f,0,0)
+				platform:applyLinearImpulse(0,f,0,0)
 			end
 		end
 		return false
