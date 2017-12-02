@@ -54,13 +54,13 @@ end
 function scene:create(event)
 	local debug = false 
 
-	-- start
+	-- Start
 	print("Hello world, I am here again!")
     self.W = display.contentWidth 
     self.H = display.contentHeight   
     print(self.W, self.H)
 	
-	-- background
+	-- Background
     local background = display.newImageRect( "background.png", self.W, self.H )
     background.x = display.contentCenterX
     background.y = display.contentCenterY
@@ -69,7 +69,7 @@ function scene:create(event)
 	physics.start()
 	--physics.setContinuous(true)
 
-	-- bounds
+	-- Bounds
 	depth  = 0
 	top    =  display.newRect(display.contentCenterX, 0, self.W, 1)
 	bottom =  display.newRect(display.contentCenterX, self.H+depth, self.W, 10)
@@ -84,10 +84,9 @@ function scene:create(event)
 	physics.addBody(right,    "static" )
 	physics.addBody(top,      "static" )
 	
-	-- create platform
-	local shellR         = 300 
+	-- Platform
+	local shellR   = 300 
     local platform = display.newImageRect("platform.png", 300, 70)
-    platform.name  = "Platform"
     platform.x     = display.contentCenterX
     platform.y     = display.contentHeight-160
 	platform:addEventListener("touch", onTouch) -- Listen touch event for platform 
@@ -97,8 +96,27 @@ function scene:create(event)
 		local vertices = { -w/2,h/2, (-w/2)+d,-h/2, (w/2)-d,-h/2, w/2,h/2 }
 		return 	vertices
 	end 
+
+	function print_shape(shape)
+		n = table.getn (shape)
+		print("----")
+		for i = 1,n,2 do
+			x = shape[i]
+			y = shape[i+1]
+			print(x,y)
+		end
+		print("----")		
+	end
 	
-	-- create platform's shell
+	function move_shape(shape, x,y)
+		n = table.getn (shape)
+		for i = 1,n,2 do
+			shape[i]   = shape[i]+x
+			shape[i+1] = shape[i+1]+y
+		end		
+	end
+
+	-- Shell
 	local shell_shape = calc_shape(platform.width, 50, platform.width*.30)
 	local shell = display.newPolygon(0,0, shell_shape)
 	shell.x     = platform.x
@@ -109,7 +127,7 @@ function scene:create(event)
 	piston.isLimitEnabled = true
 	piston:setLimits(0, 30)
 
-	-- create platform's wheels
+	-- Wheels
 	local wheel_radius = 50
     local wheel1 = display.newImageRect("wooden-wheel.png", wheel_radius*2, wheel_radius*2)
     local wheel2 = display.newImageRect("wooden-wheel.png", wheel_radius*2, wheel_radius*2)
@@ -122,20 +140,32 @@ function scene:create(event)
 	physics.newJoint("pivot", platform, wheel1, wheel1.x, wheel1.y)
 	physics.newJoint("pivot", platform, wheel2, wheel2.x, wheel2.y)
 
-	-- create ball
+	-- Ball
 	local ball = display.newImageRect("scull.png", 112, 112)
-	ball.name  = "ball"
     ball.x     = display.contentCenterX
     ball.y     = display.contentCenterY
-    physics.addBody(ball, "dynamic", {radius=50, bounce=.95 ,friction=.5})
+	physics.addBody(ball, "dynamic", {radius=50, bounce=.95 ,friction=.5})
 	
-	-- create cloud
-	local cloud_shape = calc_shape(500, 150, 0)
-	local cloud = display.newPolygon(0,0, cloud_shape)
+	
+	-- Angel
+	local angel = display.newImageRect("angel.png", 270, 300)
+	local angel_shape_1 = calc_shape(angel.width*.3, angel.height*.8, 0)
+	local angel_shape_2 = calc_shape(angel.width*.4, angel.height*.2, 0)
+	move_shape(angel_shape_2,0,100) 
+	angel.x     = display.contentCenterX
+	angel.y     = display.contentCenterY-470
+	physics.addBody(angel, "dynamic", {shape=angel_shape_1, bounce=.1}, {shape=angel_shape_2, bounce=.1})
+
+	
+	-- Cloud
+	local cloud_shape_image = calc_shape(500, 150, 100)
+	local cloud_shape_body  = calc_shape(500, 75, 100)
+	move_shape(cloud_shape_body,0,30) 	
+	local cloud = display.newPolygon(0,0, cloud_shape_image)
 	cloud.fill  = {type="image", filename="cloud1.png"}
 	cloud.x     = display.contentCenterX
     cloud.y     = display.contentCenterY-450
-	physics.addBody(cloud, "dynamic", {shape=cloud_shape, bounce=.95 ,friction=.5})
+	physics.addBody(cloud, "dynamic", {shape=cloud_shape_body, bounce=.95 ,friction=.5})
 	local touch1 = physics.newJoint( "touch", cloud, cloud.x-100, cloud.y)
 	local touch2 = physics.newJoint( "touch", cloud, cloud.x+100, cloud.y)
 	local dr = 0.7
@@ -154,7 +184,7 @@ function scene:create(event)
 					physics.setDrawMode("normal")
 					debug = false					
 				else
-					physics.setDrawMode("debug")
+					physics.setDrawMode("hybrid")
 					debug = true		
 				end
 			end
