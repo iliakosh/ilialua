@@ -13,6 +13,7 @@ local scene = require("composer").newScene()
 -- use left and right keys to move the platform ?
 -- add physical bounds
 
+
 -- add an impuls when the ball collide the platform depepended on collision coords
 -- add bricks
 -- destroy bricks after N collisions
